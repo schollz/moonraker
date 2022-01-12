@@ -67,5 +67,5 @@ install using with
 after installing, make sure you install the samples with this command in maiden:
 
 ```
-os.execute("cd ~/dust/audio && echo 'downloading...' && wget -q https://github.com/schollz/moonraker/releases/download/samplepack1/moonraker.zip && unzip moonraker.zip && rm moonraker.zip; echo 'ready!'")
+os.execute("cd ~/dust/audio && echo 'downloading...' && wget -q https://github.com/schollz/moonraker/releases/download/samplepack1/moonraker.zip && unzip moonraker.zip && rm moonraker.zip; echo 'ready (make sure to restart)'")
 ```
