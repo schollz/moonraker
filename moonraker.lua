@@ -194,7 +194,7 @@ function reinit_samples(o)
   for i=1,8 do
     smpl[i]={}
     for j=1,112 do
-      local filename=string.format(_path.code.."moonraker/samples/%d/%03d_moonraker.wav",i,j)
+      local filename=string.format(_path.audio.."moonraker/%d/%03d_moonraker.wav",i,j)
       smpl[i][j]=sample:new({
         filename=filename,
         bank=i,
