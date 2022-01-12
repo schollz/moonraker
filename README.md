@@ -58,8 +58,14 @@ during playback, each beat is counted and a modulus is computed against each act
 
 ## Install
 
-install with
+install using with
 
 ```
 ;install https://github.com/schollz/moonraker
+```
+
+after installing, make sure you install the samples with this command in maiden:
+
+```
+os.execute("cd ~/dust/audio && wget https://github.com/schollz/moonraker/releases/download/samplepack1/moonraker.zip && unzip moonraker.zip && rm moonraker.zip")
 ```
