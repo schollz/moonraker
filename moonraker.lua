@@ -1,4 +1,4 @@
--- moonraker v0.1
+-- moonraker v0.2
 -- sequel to goldeneye.
 --
 -- llllllll.co/t/moonraker
@@ -33,6 +33,22 @@ message="K2: regenerate"
 message_level2=15
 message2="K3: blast off"
 local save_slot=1
+
+-- INCLUDING SAMPLES --
+-- you can supply a folder for each type of sample
+-- in each of the 8 banks, for example:
+sample_folder={
+  _path.audio.."moonraker/1/",
+  _path.audio.."moonraker/2/",
+  _path.audio.."moonraker/3/",
+  _path.audio.."moonraker/4/",
+  _path.audio.."moonraker/5/",
+  _path.audio.."moonraker/6/",
+  _path.audio.."moonraker/7/",
+  _path.audio.."moonraker/8/",
+}
+-- OR, you can just set the variable to the folder with your samples:
+sample_folder=_path.audio.."common/808/"
 
 function init()
   local divisions={1/32,1/24,1/16,1/12,1/10,1/8,1/6,1/4,1/3,1/2}
@@ -188,21 +204,37 @@ function clock.transport.stop()
 end
 
 function reinit_samples(o)
+  local function ends_with(str,ending)
+    return ending=="" or str:sub(-#ending)==ending
+  end
+
+  if type(sample_folder)~="table" then
+    local foo={}
+    for i=1,8 do
+      table.insert(foo,sample_folder)
+    end
+    sample_folder=foo
+  end
   o=o or {}
   -- initialize samples
   smpl_active={}
   for i=1,8 do
     smpl[i]={}
-    for j=1,112 do
-      local filename=string.format(_path.audio.."moonraker/%d/%03d_moonraker.wav",i,j)
-      smpl[i][j]=sample:new({
-        filename=filename,
-        bank=i,
-        id=j,
-        active=o.active
-      })
-      if smpl[i][j].active then
-        table.insert(smpl_active,{i,j})
+    local files=util.scandir(sample_folder[i])
+    j=0
+    for _,filename in ipairs(files) do
+      filename=sample_folder[i]..filename
+      if j<112 and (ends_with(filename,".wav") or ends_with(filename,".flac")) then
+        j=j+1
+        smpl[i][j]=sample:new({
+          filename=filename,
+          bank=i,
+          id=j,
+          active=o.active
+        })
+        if smpl[i][j].active then
+          table.insert(smpl_active,{i,j})
+        end
       end
     end
   end
@@ -341,7 +373,7 @@ function enc(k,d)
         end
       else
         local bank=math.random(1,8)
-        local i=math.random(1,112)
+        local i=math.random(1,#smpl[bank])
         smpl[bank][i].active=true
         table.insert(smpl_active,{bank,i})
       end
