@@ -35,9 +35,8 @@ Engine_Moonraker : CroneEngine {
 
 			// reverb
 			snd2 = In.ar(inReverb,2);
-			snd2=FreeVerb2.ar( BPF.ar(snd2[0], 3500, 1.5), BPF.ar(snd2[1], 3500, 1.5), 1.0, 0.95, 0.15 );
+			snd2=FreeVerb2.ar(snd2[0],snd2[1], 1.0, 0.95, 0.15 );
 			snd2=Limiter.ar(snd2, 0.95, 0.02);
-			snd2=snd2*0.5;
 			// another kind of reverb
 			// snd2 = DelayN.ar(snd2, 0.03, 0.03);
 			// snd2 = CombN.ar(snd2, 0.1, {Rand(0.01,0.099)}!32, 4);
@@ -47,7 +46,7 @@ Engine_Moonraker : CroneEngine {
 			// snd2 = LPF.ar(snd2, 1500);
 			// snd2 = LeakDC.ar(snd2);
 
-			snd2=snd2*(1-(0.8*EnvGen.ar(Env.perc(reverbAttack,reverbDecay), t_trig)+0.2));
+			//snd2=snd2*(1-(0.8*EnvGen.ar(Env.perc(reverbAttack,reverbDecay), t_trig)+0.2));
 
 			Out.ar(out,snd2);
 		}).add;

@@ -122,7 +122,7 @@ function init()
   for i=1,8 do
     params:add_binary("bank_mute"..i,"bank "..i.." mute","toggle")
   end
-  engine.fx(clock.get_beat_sec()/4,4,0.2)
+  engine.fx(clock.get_beat_sec()/8,2,0.2)
   sample=include("moonraker/lib/sample")
   ggrid=include("moonraker/lib/ggrid")
   smpl={}
