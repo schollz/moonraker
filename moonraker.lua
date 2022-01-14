@@ -115,7 +115,7 @@ function init()
   params:set_action("bitcrush",function(x)
     engine.main(params:get("drive")/100,params:get("bitcrush")/100,params:get("lpf"))
   end)
-  params:add_control("mutation_rate","mutation rate",controlspec.new(0,100,'lin',0.1,1,'%',0.1/100))
+  params:add_control("mutation_rate","mutation rate",controlspec.new(0,100,'lin',0.1,0.5,'%',0.1/100))
   params:add_control("density","density",controlspec.new(0.1,10,'lin',0.1,1,'x',0.1/10))
   params:add_control("metronome","metronome",controlspec.new(0,1,'lin',0.01,0,'amp',0.01/1))
 
@@ -286,7 +286,7 @@ function reinit_samples(o)
 end
 
 function play_samples(beat)
-  local mmod={1,2,3,4,5,7,11,13,17,19,23,27,29,31,37,41,43,47}
+  local mmod={1,2,3,4,5,7,11,8,17,19,23,27,29,31,37,16,43,47}
   local banks_triggered={0,0,0,0,0,0,0,0}
   local banks_found={false,false,false,false,false,false,false,false}
   for bank=1,8 do
