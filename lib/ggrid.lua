@@ -230,13 +230,12 @@ function GGrid:get_visual()
   for bank=1,8 do
     self.visual[8][bank]=bank==global_bank and 10 or 2
     for _,smp in ipairs(smpl[bank]) do
-
       if smp.playing and smp.active then
         self.visual[8][bank]=global_bank==bank and 15 or 5
       end
     end
     if params:get("bank_mute"..bank)==0 then
-      self.visual[8][bank+8]=10
+      self.visual[8][bank+8]=5
     end
   end
 

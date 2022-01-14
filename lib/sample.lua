@@ -93,7 +93,7 @@ function Sample:play(o)
     self.rate=util.linlin(1,8,-1.5,-0.5,rrate)
   end
   engine.play(self.filename,final_amp,self.pan+rpan,self.attack,self.decay,
-    self.sampleStart+(math.random()/100),self.sampleEnd,self.loop,self.rate,self.lpf,self.hpf,self.t_trig,
+    self.sampleStart,self.sampleEnd,self.loop,self.rate,self.lpf,self.hpf,self.t_trig,
   self.sendReverb,self.sendDelay,self.bank,self.id)
   return final_amp
 end
