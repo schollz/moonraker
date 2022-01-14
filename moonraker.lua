@@ -1,4 +1,4 @@
--- moonraker v0.1
+-- moonraker v0.2
 -- sequel to goldeneye.
 --
 -- llllllll.co/t/moonraker
@@ -33,11 +33,70 @@ message="K2: regenerate"
 message_level2=15
 message2="K3: blast off"
 local save_slot=1
+local mc=midi.connect()
+local DEFAULT_NOTES={
+  -- General MIDI standard
+  36,-- Kick
+  38,-- Snare
+  37,-- Rim
+  42,-- Closed hi-hat
+  46,-- Open hi-hat
+  70,-- Maraca
+  56,-- Cowbell
+  55,-- Splash
+}
+
+-- INCLUDING SAMPLES --
+-- you can supply a folder for each type of sample
+-- in each of the 8 banks, for example:
+sample_folder={
+  _path.audio.."moonraker/1/",
+  _path.audio.."moonraker/2/",
+  _path.audio.."moonraker/3/",
+  _path.audio.."moonraker/4/",
+  _path.audio.."moonraker/5/",
+  _path.audio.."moonraker/6/",
+  _path.audio.."moonraker/7/",
+  _path.audio.."moonraker/8/",
+}
+-- OR, you can just set the variable to the folder with your samples:
+--sample_folder=_path.audio.."common/808/"
 
 function init()
   local divisions={1/32,1/24,1/16,1/12,1/10,1/8,1/6,1/4,1/3,1/2}
   local divisions_={"1/32","1/24","1/16","1/12","1/10","1/8","1/6","1/4","1/3","1/2"}
 
+  -- setup midi
+  midi_devices={}
+  midi_device_list={"none"}
+  for _,dev in pairs(midi.devices) do
+    table.insert(midi_device_list,dev.name)
+    midi_devices[dev.name]=midi.connect(dev.port)
+    midi_devices[dev.name].event=function(data)
+      if dev.name~=midi_device_list[params:get("midi_in")] then
+        do return end
+      end
+      local msg=midi.to_msg(data)
+      if msg.type=="clock" then
+        do return end
+      end
+      if msg.type=="continue" then
+        moonraker_start()
+      elseif msg.type=="stop" then
+        moonraker_stop()
+      end
+    end
+  end
+
+  params:add_group("MOONRAKER MIDI",2+(8*2))
+  params:add_option("midi_in","midi in",midi_device_list,1)
+  params:add_option("midi_out","midi out",midi_device_list,1)
+  for track=1,8 do
+    local note_param_id=track.."_midi_note"
+    params:add_number(note_param_id,track..": midi note",0,127,DEFAULT_NOTES[track])
+    local chan_param_id=track.."_midi_chan"
+    params:add_number(chan_param_id,track..": midi chan",1,16,1)
+  end
   params:add_option("division","division",divisions_,3)
   params:set_action("division",function(x)
     if pattern~=nil then
@@ -56,12 +115,14 @@ function init()
   params:set_action("bitcrush",function(x)
     engine.main(params:get("drive")/100,params:get("bitcrush")/100,params:get("lpf"))
   end)
-  params:add_control("mutation_rate","mutation rate",controlspec.new(0,100,'lin',0.1,1,'%',0.1/100))
+  params:add_control("mutation_rate","mutation rate",controlspec.new(0,100,'lin',0.1,0.5,'%',0.1/100))
   params:add_control("density","density",controlspec.new(0.1,10,'lin',0.1,1,'x',0.1/10))
+  params:add_control("metronome","metronome",controlspec.new(0,1,'lin',0.01,0,'amp',0.01/1))
+
   for i=1,8 do
     params:add_binary("bank_mute"..i,"bank "..i.." mute","toggle")
   end
-  engine.fx(clock.get_beat_sec()/4,4,0.2)
+  engine.fx(clock.get_beat_sec()/8,2,0.2)
   sample=include("moonraker/lib/sample")
   ggrid=include("moonraker/lib/ggrid")
   smpl={}
@@ -85,35 +146,24 @@ function init()
 
   -- setup lattice
   lattice=lattice_:new()
-  local beat=0
+  global_beat=-1
   global_silence=0
   pattern=lattice:new_pattern{
     action=function(t)
-      beat=beat+1
-      play_samples(beat)
+      global_beat=global_beat+1
+      play_samples(global_beat)
+      if params:get("metronome")>0 then
+        if global_beat%16==0 then
+          engine.polyperc(params:get("metronome"),440)
+        elseif global_beat%4==0 then
+          engine.polyperc(params:get("metronome"),220)
+        end
+      end
     end,
     division=1/16
   }
-  lattice:start()
-  lattice:stop()
   lattice_is_playing=false
   reinit_samples()
-
-  -- setup midi
-  for _,dev in pairs(midi.devices) do
-    local conn=midi.connect(dev.port)
-    conn.event=function(data)
-      local msg=midi.to_msg(data)
-      if msg.type=="clock" then
-        do return end
-      end
-      if msg.type=="continue" then
-        clock.transport.start()
-      elseif msg.type=="stop" then
-        clock.transport.stop()
-      end
-    end
-  end
 
   -- setup saving and loadstring
   params.action_write=function(filename,name)
@@ -169,8 +219,8 @@ function init()
   end)
 end
 
-function clock.transport.start()
-  print("transport start")
+function moonraker_start()
+  print("moonraker start")
   if lattice_is_playing then
     do return end
   end
@@ -178,41 +228,71 @@ function clock.transport.start()
   lattice_is_playing=true
 end
 
-function clock.transport.stop()
-  print("transport stop")
+function moonraker_stop()
+  print("moonraker stop")
   if not lattice_is_playing then
     do return end
   end
   lattice:stop()
   lattice_is_playing=false
+  global_beat=-1
+end
+
+function clock.transport.start()
+  print("transport start")
+  moonraker_start()
+end
+
+function clock.transport.stop()
+  print("transport stop")
+  moonraker_stop()
 end
 
 function reinit_samples(o)
+  local function ends_with(str,ending)
+    return ending=="" or str:sub(-#ending)==ending
+  end
+
+  if type(sample_folder)~="table" then
+    local foo={}
+    for i=1,8 do
+      table.insert(foo,sample_folder)
+    end
+    sample_folder=foo
+  end
   o=o or {}
   -- initialize samples
   smpl_active={}
   for i=1,8 do
     smpl[i]={}
-    for j=1,112 do
-      local filename=string.format(_path.audio.."moonraker/%d/%03d_moonraker.wav",i,j)
-      smpl[i][j]=sample:new({
-        filename=filename,
-        bank=i,
-        id=j,
-        active=o.active
-      })
-      if smpl[i][j].active then
-        table.insert(smpl_active,{i,j})
+    local files=util.scandir(sample_folder[i])
+    j=0
+    for _,filename in ipairs(files) do
+      filename=sample_folder[i]..filename
+      if j<112 and (ends_with(filename,".wav") or ends_with(filename,".flac")) then
+        j=j+1
+        smpl[i][j]=sample:new({
+          filename=filename,
+          bank=i,
+          id=j,
+          active=o.active
+        })
+        if smpl[i][j].active then
+          table.insert(smpl_active,{i,j})
+        end
       end
     end
   end
 end
 
 function play_samples(beat)
-  local mmod={1,2,3,4,5,7,11,13,17,19,23,27,29,31,37,41,43,47}
+  local mmod={1,2,3,4,5,7,11,8,17,19,23,27,29,31,37,16,43,47}
+  local banks_triggered={0,0,0,0,0,0,0,0}
+  local banks_found={false,false,false,false,false,false,false,false}
   for bank=1,8 do
     if params:get("bank_mute"..bank)==0 then
       for _,smp in ipairs(smpl[bank]) do
+        local amp_played=0
         if (next(smp.mods)~=nil or next(smp.modsinv)~=nil) and smp.active then
           local hit=false
           for m_,_ in pairs(smp.mods) do
@@ -267,19 +347,40 @@ function play_samples(beat)
               hit=not hit
             end
           end
+          local_do_hit=hit
           if hit then
-
-            radii[math.floor(radii_i)]=util.linlin(0,0.5,15,40,smp:play())+(math.random(4,12)/radii_i)
+            amp_played=smp:play()
+            radii[math.floor(radii_i)]=util.linlin(0,0.5,15,40,amp_played)+(math.random(4,12)/radii_i)
             radii_i=radii_i-0.25
             if radii_i<=1 then
               radii_i=#radii
             end
           end
         end
+        if smp.active then
+          banks_found[bank]=true
+          banks_triggered[bank]=amp_played
+        end
+      end --for _,smp in ipairs(smpl[bank]) do
+    end -- if not muted
+  end -- for bank=1,8
+  -- trigger all the midi
+  for bank,amp in ipairs(banks_triggered) do
+    if banks_found[bank] and amp>0 then
+      if params:get("midi_out")>1 then
+        midi_devices[midi_device_list[params:get("midi_out")]]:note_on(
+          params:get(bank.."_midi_note"),
+          math.floor(util.clamp(util.linlin(0,0.5,0,127,amp),0,127)),
+        params:get(bank.."_midi_chan"))
+        clock.run(function()
+          clock.sleep(0.1)
+          midi_devices[midi_device_list[params:get("midi_out")]]:note_off(
+          params:get(bank.."_midi_note"),0,params:get(bank.."_midi_chan"))
+        end)
       end
     end
   end
-end
+end -- end function
 
 function update_screen()
   redraw()
@@ -311,11 +412,10 @@ function key(k,z)
       reinit_samples()
     elseif k==3 then
       if lattice_is_playing then
-        lattice:stop()
+        moonraker_stop()
       else
-        lattice:hard_restart()
+        moonraker_start()
       end
-      lattice_is_playing=not lattice_is_playing
     end
   end
 end
@@ -341,7 +441,7 @@ function enc(k,d)
         end
       else
         local bank=math.random(1,8)
-        local i=math.random(1,112)
+        local i=math.random(1,#smpl[bank])
         smpl[bank][i].active=true
         table.insert(smpl_active,{bank,i})
       end
@@ -355,6 +455,7 @@ function enc(k,d)
     end
   end
 end
+
 
 -- function show_sample()
 --   local s=smpl[1][1]

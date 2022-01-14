@@ -61,14 +61,15 @@ function GGrid:key_press(row,col,on)
       do return end
     elseif row==8 then
       params:delta("bank_mute"..col-8,1)
-    elseif row<8 and self.pressed_buttons["8,"..global_bank]==nil and global_sample==nil then
-      smpl[global_bank][m].active=not smpl[global_bank][m].active
-      smpl[global_bank][m]:play()
     elseif self.pressed_buttons["8,"..global_bank] then
       -- select sample
       global_sample=m
-      smpl[global_bank][m].active=true
-      smpl[global_bank][global_sample]:play({amp=0.5})
+      smpl[global_bank][m]:play({amp=0.5})
+      do return end
+    elseif global_sample==nil then
+      -- select sample
+      smpl[global_bank][m].active=not smpl[global_bank][m].active
+      smpl[global_bank][m]:play({amp=0.5})
       do return end
     elseif row==1 then
       -- turn off/on mod for current sample
@@ -86,7 +87,50 @@ function GGrid:key_press(row,col,on)
         smpl[global_bank][global_sample].modsinv[m]=nil
       end
     elseif row==3 then
-      smpl[global_bank][global_sample].rot=col-1
+      local count=0
+      for k in pairs(self.pressed_buttons) do
+        count=count+1
+      end
+      if count==1 then
+        smpl[global_bank][global_sample].rate_range={col,col}
+      else
+        smpl[global_bank][global_sample].rate_range[2]=col
+        if smpl[global_bank][global_sample].rate_range[1]>smpl[global_bank][global_sample].rate_range[2] then
+          local foo=smpl[global_bank][global_sample].rate_range[1]
+          smpl[global_bank][global_sample].rate_range[1]=smpl[global_bank][global_sample].rate_range[2]
+          smpl[global_bank][global_sample].rate_range[2]=foo
+        end
+      end
+    elseif row==4 then
+      local count=0
+      for k in pairs(self.pressed_buttons) do
+        count=count+1
+      end
+      if count==1 then
+        smpl[global_bank][global_sample].reverb_range={col,col}
+      else
+        smpl[global_bank][global_sample].reverb_range[2]=col
+        if smpl[global_bank][global_sample].reverb_range[1]>smpl[global_bank][global_sample].reverb_range[2] then
+          local foo=smpl[global_bank][global_sample].reverb_range[1]
+          smpl[global_bank][global_sample].reverb_range[1]=smpl[global_bank][global_sample].reverb_range[2]
+          smpl[global_bank][global_sample].reverb_range[2]=foo
+        end
+      end
+    elseif row==5 then
+      local count=0
+      for k in pairs(self.pressed_buttons) do
+        count=count+1
+      end
+      if count==1 then
+        smpl[global_bank][global_sample].delay_range={col,col}
+      else
+        smpl[global_bank][global_sample].delay_range[2]=col
+        if smpl[global_bank][global_sample].delay_range[1]>smpl[global_bank][global_sample].delay_range[2] then
+          local foo=smpl[global_bank][global_sample].delay_range[1]
+          smpl[global_bank][global_sample].delay_range[1]=smpl[global_bank][global_sample].delay_range[2]
+          smpl[global_bank][global_sample].delay_range[2]=foo
+        end
+      end
     elseif row==6 then
       local count=0
       for k in pairs(self.pressed_buttons) do
@@ -132,11 +176,20 @@ function GGrid:get_visual()
     end
   end
 
+  local pressing_bank=false 
+  for i=1,8 do 
+    if self.pressed_buttons["8,"..i]~=nil then
+      pressing_bank=true
+    end
+  end
+
   if global_sample==nil then
     -- illuminate playing
     for j,smp in ipairs(smpl[global_bank]) do
       if smp.active then
-        self.visual[smp.row][smp.col]=smp.playing and 15 or 3
+        self.visual[smp.row][smp.col]=smp.playing and 15 or 5
+      else
+        self.visual[smp.row][smp.col]=2
       end
     end
   else
@@ -154,12 +207,21 @@ function GGrid:get_visual()
         self.visual[math.floor(m/16-0.0001)+2][(m-1)%16+1]=7
       end
     end
-    self.visual[3][smp.rot+1]=15
-    for i=smp.amp_range[1],smp.amp_range[2] do
-      self.visual[7][i]=7
+
+    for i=smp.rate_range[1],smp.rate_range[2] do
+      self.visual[3][i]=7
+    end
+    for i=smp.reverb_range[1],smp.reverb_range[2] do
+      self.visual[4][i]=7
+    end
+    for i=smp.delay_range[1],smp.delay_range[2] do
+      self.visual[5][i]=7
     end
     for i=smp.pan_range[1],smp.pan_range[2] do
       self.visual[6][i]=7
+    end
+    for i=smp.amp_range[1],smp.amp_range[2] do
+      self.visual[7][i]=7
     end
   end
 
@@ -168,13 +230,12 @@ function GGrid:get_visual()
   for bank=1,8 do
     self.visual[8][bank]=bank==global_bank and 10 or 2
     for _,smp in ipairs(smpl[bank]) do
-
       if smp.playing and smp.active then
         self.visual[8][bank]=global_bank==bank and 15 or 5
       end
     end
     if params:get("bank_mute"..bank)==0 then
-      self.visual[8][bank+8]=10
+      self.visual[8][bank+8]=5
     end
   end
 

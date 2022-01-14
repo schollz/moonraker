@@ -35,9 +35,8 @@ Engine_Moonraker : CroneEngine {
 
 			// reverb
 			snd2 = In.ar(inReverb,2);
-			snd2=FreeVerb2.ar( BPF.ar(snd2[0], 3500, 1.5), BPF.ar(snd2[1], 3500, 1.5), 1.0, 0.95, 0.15 );
+			snd2=FreeVerb2.ar(snd2[0],snd2[1], 1.0, 0.95, 0.15 );
 			snd2=Limiter.ar(snd2, 0.95, 0.02);
-			snd2=snd2*0.5;
 			// another kind of reverb
 			// snd2 = DelayN.ar(snd2, 0.03, 0.03);
 			// snd2 = CombN.ar(snd2, 0.1, {Rand(0.01,0.099)}!32, 4);
@@ -47,7 +46,7 @@ Engine_Moonraker : CroneEngine {
 			// snd2 = LPF.ar(snd2, 1500);
 			// snd2 = LeakDC.ar(snd2);
 
-			snd2=snd2*(1-(0.8*EnvGen.ar(Env.perc(reverbAttack,reverbDecay), t_trig)+0.2));
+			//snd2=snd2*(1-(0.8*EnvGen.ar(Env.perc(reverbAttack,reverbDecay), t_trig)+0.2));
 
 			Out.ar(out,snd2);
 		}).add;
@@ -64,8 +63,16 @@ Engine_Moonraker : CroneEngine {
 			snd=RHPF.ar(snd,60,1-0.45);
 			snd=RLPF.ar(snd,5000,1-0.23);
 			snd=SelectX.ar(Lag.kr(bitcrush,0.2),[snd,Decimator.ar(snd,12000,16)]);
-			snd=MoogVCF.ar(snd,Lag.kr(lpf,0.3),0.8);
+			snd=MoogFF.ar(snd,Lag.kr(lpf,0.3),2);
 			Out.ar(out,snd.softclip);
+		}).add;
+
+		SynthDef("polyperc",{
+			arg hz=220,amp=0.5;
+			var snd=Pulse.ar([hz,hz+1]);
+			snd=MoogFF.ar(snd,hz*1.5,2);
+			snd=amp*snd*EnvGen.ar(Env.perc(0.01,0.2),doneAction:2);
+			Out.ar(0,snd);
 		}).add;
 
 
@@ -148,6 +155,10 @@ Engine_Moonraker : CroneEngine {
 		context.server.sync;
  		synFX=Synth.before(synMain,"fx",[\out,busMain,\inDelay,busDelay,\inReverb,busReverb]);
 		context.server.sync;
+
+		this.addCommand("polyperc","ff",{ arg msg ;
+			Synth.new("polyperc",[\amp,msg[1],\hz,msg[2]]);
+		});
 
 		this.addCommand("main","fff",{ arg msg ;
 			synMain.set(\amp,msg[1],\bitcrush,msg[2],\lpf,msg[3]);
