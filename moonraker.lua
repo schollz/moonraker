@@ -456,6 +456,7 @@ function enc(k,d)
   end
 end
 
+
 -- function show_sample()
 --   local s=smpl[1][1]
 --   screen.move(1,10)
