@@ -1,4 +1,4 @@
--- moonraker v0.2
+-- moonraker v0.3
 -- sequel to goldeneye.
 --
 -- llllllll.co/t/moonraker
@@ -442,8 +442,7 @@ function enc(k,d)
       else
         local bank=math.random(1,8)
         local i=math.random(1,#smpl[bank])
-        smpl[bank][i].active=true
-        table.insert(smpl_active,{bank,i})
+        toggle_sample(bank,i,true)      
       end
     elseif k==2 then
       params:delta("lpf",d)
@@ -456,6 +455,22 @@ function enc(k,d)
   end
 end
 
+function toggle_sample(bank,i,active)
+  smpl[bank][i].active=active 
+  if active then
+    table.insert(smpl_active,{bank,i})
+  else
+    -- remove it from smpl_active
+    local foo={}
+    for _, v in ipairs(smpl_active) do
+      if v[1]==bank and v[2]==i then
+      else
+        table.insert(foo,v)
+      end
+    end
+    smpl_active=foo
+  end
+end
 
 -- function show_sample()
 --   local s=smpl[1][1]

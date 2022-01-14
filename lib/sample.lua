@@ -5,7 +5,7 @@ function Sample:new(o)
   setmetatable(o,self)
   self.__index=self
   o.vars={"filename","amp","pan","attack","decay","sampleStart","sampleEnd","loop","rate","lpf","hpf",
-  "sendReverb","sendDelay","bank","id"}
+  "sendReverb","sendDelay","bank","id","rot","pan_range","amp_range","delay_range","reverb_range","rate_range"}
   o.filename=o.filename
   o.mutate=1
   o.amp=0.5
@@ -61,6 +61,14 @@ function Sample:dump()
   for _,key in ipairs(self.vars) do
     d[key]=self[key]
   end
+  d.mods={}
+  for k,v in pairs(self.mods) do 
+    table.insert(d.mods,{k,v})
+  end
+  d.modsinv={}
+  for k,v in pairs(self.modsinv) do 
+    table.insert(d.modsinv,{k,v})
+  end
   return d
 end
 
@@ -71,6 +79,14 @@ function Sample:load(d)
         self[key]=d[key]
       end
     end
+  end
+  self.mods={}
+  for _,v in ipairs(d.mods) do
+    self.mods[v[1]]=v[2]
+  end
+  self.modsinv={}
+  for _,v in ipairs(d.modsinv) do
+    self.modsinv[v[1]]=v[2]
   end
 end
 

@@ -68,7 +68,7 @@ function GGrid:key_press(row,col,on)
       do return end
     elseif global_sample==nil then
       -- select sample
-      smpl[global_bank][m].active=not smpl[global_bank][m].active
+      toggle_sample(global_bank,m,not smpl[global_bank][m].active)
       smpl[global_bank][m]:play({amp=0.5})
       do return end
     elseif row==1 then
