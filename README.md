@@ -52,9 +52,18 @@ moonraker has eight banks (kick, snare, rim, hat, ride, shaker, perc, risers) ea
 
 during playback, each beat is counted and a modulus is computed against each active sample. each sample contains modulus numbers and inverse modulus numbers. an active sample is *played* when any modulus number computed against the current beat has no remainder. however, the inverse modulus do the opposite - whenever their computed modulus has no remainder then the playing of the current active sample is reversed. the randomly assigned modulo numbers are all prime numbers (with exception for two numbers: *1* and *4*). modulo numbers are randomly changed at a rate corresponding to the `PARAMS > mutation rate`.
 
-## todo
+***using the grid***
 
-- explain the grid interface (its heavily complicated unfortunately). I will make a video tutorial. in the meantime just use K2 :boom: 
+the grid is optional. using it will allow you to edit the parameters of specific samples. here is a short tutorial on how to use the grid.
+
+https://vimeo.com/665856265
+
+
+![m1](https://user-images.githubusercontent.com/6550035/150999017-de8bddfd-02ad-4f1d-9738-e3d75aac856f.png)
+
+![m2](https://user-images.githubusercontent.com/6550035/150999013-56a3f6e9-afda-4abd-966e-6e7238a19560.png)
+
+thank you @rebuspop for the amazing Grid layout tutorial!
 
 ## Install
 
@@ -64,7 +73,7 @@ install using with
 ;install https://github.com/schollz/moonraker
 ```
 
-after installing, make sure you install the samples with this command in maiden:
+after installing, make sure you install the 100 MB of samples with this command in maiden:
 
 ```
 os.execute("cd ~/dust/audio && echo 'downloading...' && wget -q https://github.com/schollz/moonraker/releases/download/samplepack1/moonraker.zip && unzip moonraker.zip && rm moonraker.zip; echo 'ready (make sure to restart)'")
