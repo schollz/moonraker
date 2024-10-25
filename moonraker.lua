@@ -118,6 +118,7 @@ function init()
   params:add_control("mutation_rate","mutation rate",controlspec.new(0,100,'lin',0.1,0.5,'%',0.1/100))
   params:add_control("density","density",controlspec.new(0.1,10,'lin',0.1,1,'x',0.1/10))
   params:add_control("metronome","metronome",controlspec.new(0,1,'lin',0.01,0,'amp',0.01/1))
+  params:add_binary("play_on_press","play on press","toggle",1)
 
   for i=1,8 do
     params:add_binary("bank_mute"..i,"bank "..i.." mute","toggle")

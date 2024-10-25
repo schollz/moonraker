@@ -64,12 +64,16 @@ function GGrid:key_press(row,col,on)
     elseif self.pressed_buttons["8,"..global_bank] then
       -- select sample
       global_sample=m
-      smpl[global_bank][m]:play({amp=0.5})
+      if params:get("play_on_press")==1 then
+        smpl[global_bank][m]:play({amp=0.5})
+      end
       do return end
     elseif global_sample==nil then
       -- select sample
       toggle_sample(global_bank,m,not smpl[global_bank][m].active)
-      smpl[global_bank][m]:play({amp=0.5})
+      if params:get("play_on_press")==1 then
+        smpl[global_bank][m]:play({amp=0.5})
+      end
       do return end
     elseif row==1 then
       -- turn off/on mod for current sample
